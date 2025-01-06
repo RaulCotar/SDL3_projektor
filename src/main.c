@@ -1,12 +1,11 @@
-#include <SDL3/SDL_oldnames.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "opengl_boilerplate.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keycode.h>
-#include "opengl_boilerplate.h"
 #include "types.h"
 
 struct GlobState {
@@ -21,13 +20,23 @@ SDL_AppResult HandleCmdlineArgs(int argc, char *argv[argc]) {
 
 SDL_AppResult InitSDL() {
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
+
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-    glob.window = SDL_CreateWindow(SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING), 640, 480, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+
+	glob.window = SDL_CreateWindow(SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING), 640, 480, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+	if (glob.window == NULL)
+		goto L_InitSDL_printSdlErrAndRetFail;
 	glob.glContext = SDL_GL_CreateContext(glob.window);
-    return SDL_APP_CONTINUE;
+	if (glob.glContext == NULL)
+		goto L_InitSDL_printSdlErrAndRetFail;
+	return SDL_APP_CONTINUE;
+
+	L_InitSDL_printSdlErrAndRetFail:
+	printf("Last SDL error: %s\n", SDL_GetError());
+	return SDL_APP_FAILURE;
 }
 
 SDL_AppResult HandleEventsQueue() {
@@ -68,13 +77,14 @@ SDL_AppResult MainLoop() {
 int main(int argc, char *argv[argc]) {
 	atexit(SDL_Quit);
 	SDL_SetAppMetadata("Projektor", APP_VERSION, "com.raulotar.projektor");
-	if (HandleCmdlineArgs(argc, argv) != SDL_APP_CONTINUE)
+	if (HandleCmdlineArgs(argc, argv) != SDL_APP_CONTINUE ||
+		InitSDL() != SDL_APP_CONTINUE ||
+		LoadOpenGL(stderr, (GLADloadproc)SDL_GL_GetProcAddress) != SDL_APP_CONTINUE) {
 		SDL_Quit();
-	if (InitSDL() != SDL_APP_CONTINUE)
-		SDL_Quit();
-	if (LoadOpenGL(stderr, (GLADloadproc)SDL_GL_GetProcAddress) != SDL_APP_CONTINUE)
-		SDL_Quit();
+		return 1;
+	}
 
+	// There are at least 4 OpenGL extensions that provide a "SetSwapInterval" function. Let SDL figure that out instead.
 	if (SDL_GL_SetSwapInterval(SDL_WINDOW_SURFACE_VSYNC_ADAPTIVE))
 		printf("Adaptive VSync enabled.\n");
 	else {

@@ -3,7 +3,7 @@
 
 #include "glad.h"
 
-/// \brief Load OpenGL using Glad and set up some default settings.
+/// \brief Load OpenGL using Glad and set up some default settings. You need to have a valid OpenGL context before calling this function.
 /// \return 0 on success, 1 for non-critical warnings, 2 otherwise
 /// \param FILE_PTR A <c>FILE*</c> to use for logging, or NULL to disable logging.
 int LoadOpenGL(void *FILE_PTR, GLADloadproc loader);
