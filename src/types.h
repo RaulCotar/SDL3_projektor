@@ -1,5 +1,5 @@
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef INCL_TYPES_H
+#define INCL_TYPES_H
 
 #include <stdint.h>
 
@@ -12,4 +12,8 @@ typedef int16_t     i16;
 typedef int32_t     i32;
 typedef int64_t     i64;
 
-#endif // ifndef TYPES_H
+#ifndef NULL
+	#define NULL ((void*)0)
+#endif
+
+#endif // ifndef INCL_TYPES_H

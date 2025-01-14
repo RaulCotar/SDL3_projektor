@@ -7,6 +7,7 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keycode.h>
 #include "types.h"
+#include "config.h"
 
 struct GlobState {
 	SDL_Window *window;
@@ -26,7 +27,7 @@ SDL_AppResult InitSDL() {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
-	glob.window = SDL_CreateWindow(SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING), 640, 480, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+	glob.window = SDL_CreateWindow(SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING), cfg_win_w, cfg_win_h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 	if (glob.window == NULL)
 		goto L_InitSDL_printSdlErrAndRetFail;
 	glob.glContext = SDL_GL_CreateContext(glob.window);
@@ -37,6 +38,22 @@ SDL_AppResult InitSDL() {
 	L_InitSDL_printSdlErrAndRetFail:
 	printf("Last SDL error: %s\n", SDL_GetError());
 	return SDL_APP_FAILURE;
+}
+
+SDL_AppResult EnableVsync() {
+	// There are at least 4 OpenGL extensions that provide a "SetSwapInterval" function. Let SDL figure that out instead.
+	if (SDL_GL_SetSwapInterval(SDL_WINDOW_SURFACE_VSYNC_ADAPTIVE))
+		printf("Adaptive VSync enabled.\n");
+	else {
+		printf("Unable to set adaptive VSync! SDL Error: %s. Trying fallback...", SDL_GetError());
+		if (SDL_GL_SetSwapInterval(1))
+			printf("VSync enabled (every vblank).\n");
+		else {
+			printf("Unable to enable VSync! SDL Error: %s.", SDL_GetError());
+			return SDL_APP_FAILURE;
+		}
+	}
+	return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult HandleEventsQueue() {
@@ -55,7 +72,7 @@ SDL_AppResult HandleEventsQueue() {
 				}
 				break;
 			default:
-				// printf("Unhandled SDL event type %u occured.\n", e.type); // this also reports mouse movements if you don't catch them above
+				// printf("Unhandled SDL event type %u occured.\n", e.type); // this all types of events you don't match above
 		}
 	}
 	return res;
@@ -83,17 +100,9 @@ int main(int argc, char *argv[argc]) {
 		SDL_Quit();
 		return 1;
 	}
+	EnableVsync();
 
-	// There are at least 4 OpenGL extensions that provide a "SetSwapInterval" function. Let SDL figure that out instead.
-	if (SDL_GL_SetSwapInterval(SDL_WINDOW_SURFACE_VSYNC_ADAPTIVE))
-		printf("Adaptive VSync enabled.\n");
-	else {
-		printf("Unable to set adaptive VSync! SDL Error: %s. Trying fallback...", SDL_GetError());
-		if (SDL_GL_SetSwapInterval(1))
-			printf("VSync enabled (every vblank).\n");
-		else
-			printf("Unable to enable VSync! SDL Error: %s.", SDL_GetError());
-	}
+	// today's goal: render a sprite map
 
 	return MainLoop() - 1;
 }
