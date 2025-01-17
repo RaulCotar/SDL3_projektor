@@ -45,7 +45,7 @@ SDL_AppResult EnableVsync() {
 	if (SDL_GL_SetSwapInterval(SDL_WINDOW_SURFACE_VSYNC_ADAPTIVE))
 		printf("Adaptive VSync enabled.\n");
 	else {
-		printf("Unable to set adaptive VSync! SDL Error: %s. Trying fallback...", SDL_GetError());
+		printf("Unable to set adaptive VSync! SDL Error: %s. Trying fallback...\n", SDL_GetError());
 		if (SDL_GL_SetSwapInterval(1))
 			printf("VSync enabled (every vblank).\n");
 		else {
